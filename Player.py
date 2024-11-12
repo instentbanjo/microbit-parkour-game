@@ -24,7 +24,7 @@ class Block:
         # Loop through the block's width and height
         for y in range(self.HEIGHT):
             for x in range(self.WIDTH):
-                display.set_pixel(self.BLOCK_START_X + x, self.BLOCK_START_Y + y, 7)
+                display.set_pixel(self.BLOCK_START_X + x, self.BLOCK_START_Y + y, 5)
 
     # Check if the block is allowed to spawn
     def check_if_spawn(self):
@@ -67,7 +67,7 @@ class Portal:
         if not self.FOUND:
             self.check_if_spawn()
             # Display the portal on the LED matrix with brightness 5
-            display.set_pixel(self.X, self.Y, 5)
+            display.set_pixel(self.X, self.Y, 7)
         else:
             del self
 
