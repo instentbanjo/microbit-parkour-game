@@ -2,6 +2,19 @@ import uuid
 
 import serial.tools.list_ports
 import datetime
+import random
+
+curr_user = "default"
+user_data = {}
+
+has_played_before = False
+
+def createFile():
+    try:
+        with open('data.ini', 'x') as f:
+            init()
+    except FileExistsError:
+        print("File already exists")
 
 curr_user = "default"
 user_data = {}
