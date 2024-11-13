@@ -2,7 +2,6 @@ import uuid
 
 import serial.tools.list_ports
 import datetime
-import random
 
 curr_user = "default"
 user_data = {}
@@ -198,6 +197,7 @@ def logGameData(serialInst):
                     # Check for level 14 completion to end the session
                     if packet.startswith("lvl;14"):
                         print("Level 14 reached!")
+                        # user_data[curr_user]['run_count'] += 1
                         break
                     print(packet)
 
@@ -260,15 +260,53 @@ def summarizeRun(user_id):
 
     print(f"Summary for user {user_id} added successfully.")
 
+def cleanUp():
+    cleaned = False
+    with open('data.ini', 'r') as f:
+        lines = f.readlines()
+
+    while True:
+        # Find start and end indices
+        start_index = None
+        end_index = None
+        for i, line in enumerate(lines):
+            # Identify the start marker
+            if line.strip().startswith("[user.") and ".data]" in line:
+                start_index = i
+            # Identify the end marker after the start marker is found
+            elif start_index is not None and line.strip().startswith("[user.") and ".run." in line:
+                end_index = i
+                break
+
+        # If both start and end markers are found, delete the lines between them
+        if start_index is not None and end_index is not None:
+            del lines[start_index:end_index]  # Exclude the marker lines themselves
+            cleaned = True
+        else:
+            break  # Exit loop if no more [user.<id>.data] sections found
+
+    # Write back only if something was cleaned
+    if cleaned:
+        with open('data.ini', 'w') as f:
+            f.writelines(lines)
+        print("Data cleaned up successfully.")
+    else:
+        print("No data found to delete.")
+
+
 def playGame():
     selectPort()
     summarizeRun(user_data[curr_user]['id'])
 
 
 createFile()
-if input("Have you already played the game (y/n)") == "y":
+answer = input("Have you already played the game (N/y)")
+if answer == "y":
     login()
     playGame()
 else:
-    registerUser(input("Enter Name: "), input("Enter Phone: "))
-    playGame()
+    if answer == "x":
+        cleanUp()
+    else:
+        registerUser(input("Enter Name: "), input("Enter Phone: "))
+        playGame()
