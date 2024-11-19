@@ -150,16 +150,32 @@ def selectPort():
     serialInst =serial.Serial()
     portList =[]
 
+    isLinux = False
+
+    if input("Which OS are you using?(W/l)") == "l":
+        isLinux = True
+
     for port in ports:
         portList.append(str(port))
         print(str(port))
 
-    val=input("Select Port: COM")
 
-    for x in range(len(portList)):
-        if portList[x].startswith("COM" + str(val)):
-            portVar="COM" + str(val)
-            print(f"Port selected: {portList[x]}")
+
+    if isLinux:
+        val=input("Select Port: /dev/tty")
+
+        for x in range(len(portList)):
+            if portList[x].startswith("/dev/tty" + str(val)):
+                portVar="/dev/tty" + str(val)
+                print(f"Port selected: {portList[x]}")
+    else:
+        val=input("Select Port: COM")
+
+        for x in range(len(portList)):
+            if portList[x].startswith("COM" + str(val)):
+                portVar="COM" + str(val)
+                print(f"Port selected: {portList[x]}")
+
 
     serialInst.baudrate =115200
     serialInst.port =portVar
