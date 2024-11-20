@@ -62,6 +62,8 @@ def registerUser(username, phone):
         "run_count": 1
     }
     with open('data.ini', 'a') as f:
+        f.write(f"[topresult]\n")
+        f.write(f"time=10000\n")
         f.write(f"[user.{user_data[curr_user]['id']}]\n")
         f.write(f"id={user_data[curr_user]['id']}\n")
         f.write(f"timestamp={user_data[curr_user]['timestamp']}\n")
@@ -288,6 +290,29 @@ def summarizeRun(user_id):
         f.writelines(lines)
 
     print(f"Summary for user {user_id} added successfully.")
+
+    checkIfBestTime(float(last_lvlt))
+
+
+
+def checkIfBestTime(current_time):
+    with open('data.ini', 'r') as f:
+        lines = f.readlines()
+    # Find the index of the "[user.<id>.finished]" line
+    topresult_line_index = None
+    found_topresult = False
+    for i, line in enumerate(lines):
+        if line.strip() == f"[topresult]":
+            found_topresult = True
+            continue
+        if found_topresult:
+            print(line)
+            if float(line.split("=")[1]) > current_time:
+                lines[i] = f"time={current_time}\n"
+            break;
+    with open('data.ini', 'w') as f:
+        f.writelines(lines)
+
 
 def cleanUp():
     cleaned = False
