@@ -33,6 +33,8 @@ def init():
     timestamp = "timestamp=" + str(datetime.datetime.now())
     with open('data.ini', 'w') as f:
         f.write("[init]\n" + timestamp + "\n")
+        f.write(f"[topresult]\n")
+        f.write(f"time=10000\n")
 
 def doesIdAlreadyExist(id):
     with open('data.ini', 'r') as f:
@@ -62,8 +64,6 @@ def registerUser(username, phone):
         "run_count": 1
     }
     with open('data.ini', 'a') as f:
-        f.write(f"[topresult]\n")
-        f.write(f"time=10000\n")
         f.write(f"[user.{user_data[curr_user]['id']}]\n")
         f.write(f"id={user_data[curr_user]['id']}\n")
         f.write(f"timestamp={user_data[curr_user]['timestamp']}\n")
@@ -194,7 +194,6 @@ def logGameData(serialInst):
                 if serialInst.in_waiting:
                     packet = serialInst.readline().decode('utf-8').strip()
                     f.write(packet + "\n")
-
                     # Check for level 14 completion to end the session
                     if packet.startswith("lvl;14"):
                         print("Level 14 reached!")
@@ -291,9 +290,51 @@ def summarizeRun(user_id):
 
     print(f"Summary for user {user_id} added successfully.")
 
+    updateLiveResult(user_id,last_lvlt, last_dth, last_rst)
     checkIfBestTime(float(last_lvlt))
 
+def updateLiveResult(uid, t, d, r):
+    with open('data.ini', 'r') as f:
+        lines = f.readlines()
 
+    # Find the index of the "[user.<id>.finished]" line
+    live_line_index = None
+    next_section_line_index = None
+    firstLive = False
+    for i, line in enumerate(lines):
+        if line.strip() == f"[user.{uid}.live]":
+            live_line_index = i
+            print(i, " is the startline ", line)
+        elif live_line_index == None and line.strip() == f"[user.{uid}.data]":
+            firstLive = True
+            live_line_index = i
+            print(i, " is not the real startline ", line)
+        elif live_line_index != None and line.strip().startswith("["):
+            if not firstLive:
+                next_section_line_index = i
+                print(i, " is the endline ", line)
+            break
+
+    if next_section_line_index != None:
+        print("replace live section")
+        lines[live_line_index + 1] = f"time={t}\n"
+        lines[live_line_index + 2] = f"deaths={d}\n"
+        lines[live_line_index + 3] = f"resets={r}\n"
+
+    else:
+        print("create live section")
+        new_live_section = (
+            f"[user.{uid}.live]\n"
+            f"time={t}\n"
+            f"deaths={d}\n"
+            f"resets={r}\n"
+        )
+        lines.insert(live_line_index, new_live_section)
+
+    with open('data.ini', 'w') as f:
+        f.writelines(lines)
+
+    print(f"Live result for user {uid} updated successfully.")
 
 def checkIfBestTime(current_time):
     with open('data.ini', 'r') as f:
@@ -306,7 +347,6 @@ def checkIfBestTime(current_time):
             found_topresult = True
             continue
         if found_topresult:
-            print(line)
             if float(line.split("=")[1]) > current_time:
                 lines[i] = f"time={current_time}\n"
             break;
