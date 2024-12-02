@@ -1,7 +1,8 @@
 import uuid
-
 import serial.tools.list_ports
 import datetime
+import json
+import os
 import random
 
 curr_user = "default"
@@ -36,6 +37,45 @@ def init():
         f.write(f"[topresult]\n")
         f.write(f"time=10000\n")
 
+
+def initializePlayerList(file_name="playerlist.json"):
+    if not os.path.exists(file_name):
+        with open(file_name, "w") as file:
+            json.dump({"data": []}, file)
+
+def loadPlayerList(file_name="playerlist.json"):
+    with open(file_name, "r") as file:
+        return json.load(file)
+
+def savePlayerList(player_data, file_name="playerlist.json"):
+    with open(file_name, "w") as file:
+        json.dump(player_data, file, indent=4)
+
+def updateUserlist(user_id, file_name="playerlist.json"):
+    initializePlayerList(file_name)
+
+    player_data = loadPlayerList(file_name)
+
+    existing_names = [entry.get("ITEMNAME") for entry in player_data["data"]]
+    item_name = "1"
+    while item_name in existing_names:
+        item_name = str(int(item_name) + 1)
+
+    # Convert UUID to string if it isn't already
+    if isinstance(user_id, uuid.UUID):
+        user_id = str(user_id)
+
+    new_entry = {
+        "ITEMNAME": item_name,
+        "ITEMKEY": user_id
+    }
+    player_data["data"].append(new_entry)
+
+    savePlayerList(player_data, file_name)
+
+    return new_entry
+
+
 def doesIdAlreadyExist(id):
     with open('data.ini', 'r') as f:
         lines = f.readlines()
@@ -51,6 +91,7 @@ def registerUser(username, phone):
     global has_played_before
     has_played_before = False
     id = uuid.uuid4()
+    updateUserlist(id)
     if doesIdAlreadyExist(id):
         print("ID already exists, generating new ID")
         print(id)
