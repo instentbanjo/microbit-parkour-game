@@ -56,7 +56,7 @@ def updateUserlist(user_id, file_name="playerlist.json"):
 
     player_data = loadPlayerList(file_name)
 
-    existing_names = [entry.get("ITEMNAME") for entry in player_data["data"]]
+    existing_names = [entry.get("{#ITEMNAME}") for entry in player_data["data"]]
     item_name = "1"
     while item_name in existing_names:
         item_name = str(int(item_name) + 1)
@@ -66,8 +66,8 @@ def updateUserlist(user_id, file_name="playerlist.json"):
         user_id = str(user_id)
 
     new_entry = {
-        "ITEMNAME": item_name,
-        "ITEMKEY": user_id
+        "{#ITEMNAME}": item_name,
+        "{#ITEMKEY}": user_id
     }
     player_data["data"].append(new_entry)
 
