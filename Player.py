@@ -253,5 +253,8 @@ Levels = [
 
 game = Game(Level(*Levels[0]))
 # play game forever
+radio.on()
+radio.send("rgstr;Aron")
+radio.off()
 while True:
     game.play()

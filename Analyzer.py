@@ -187,10 +187,48 @@ def login():
     print("Paste the ID of the user you want to select")
     selectUser(input("Enter ID: "))
 
+serialInst =serial.Serial()
 
-def selectPort():
+def selectPortForGame():
     ports=serial.tools.list_ports.comports()
-    serialInst =serial.Serial()
+    portList =[]
+
+    isLinux = False
+
+    if input("Which OS are you using?(W/l)") == "l":
+        isLinux = True
+
+    for port in ports:
+        portList.append(str(port))
+        print(str(port))
+
+
+
+    if isLinux:
+        val=input("Select Port: /dev/tty")
+
+        for x in range(len(portList)):
+            if portList[x].startswith("/dev/tty" + str(val)):
+                portVar="/dev/tty" + str(val)
+                print(f"Port selected: {portList[x]}")
+    else:
+        val=input("Select Port: COM")
+
+        for x in range(len(portList)):
+            if portList[x].startswith("COM" + str(val)):
+                portVar="COM" + str(val)
+                print(f"Port selected: {portList[x]}")
+
+
+
+    serialInst.baudrate =115200
+    serialInst.port =portVar
+    serialInst.open()
+    serialInst.write("rq".encode('utf-8'))
+    logGameData(serialInst)
+
+def selectPortForRegistration():
+    ports=serial.tools.list_ports.comports()
     portList =[]
 
     isLinux = False
@@ -224,7 +262,20 @@ def selectPort():
     serialInst.port =portVar
     serialInst.open()
     serialInst.write("rq".encode('utf-8'))
-    logGameData(serialInst)
+    while True:
+        if serialInst.in_waiting:
+            packet = serialInst.readline().decode('utf-8').strip()
+            # Check for level 14 completion to end the session
+            if packet.startswith("rgstr"):
+                print(packet.split(";")[1])
+                answer = input("Ist das dein Name? Y=ja, n=nein: ")
+                if answer == "n":
+                    serialInst.close()
+                    return(input("Mein echter Name ist ")) 
+                serialInst.close()
+                return packet.split(";")[1]
+                break
+    serialInst.close()
 
 
 def logGameData(serialInst):
@@ -333,6 +384,8 @@ def summarizeRun(user_id):
 
     updateLiveResult(user_id,last_lvlt, last_dth, last_rst)
     checkIfBestTime(float(last_lvlt))
+    serialInst.close()
+
 
 def updateLiveResult(uid, t, d, r):
     with open('data.ini', 'r') as f:
@@ -430,18 +483,21 @@ def cleanUp():
 
 
 def playGame():
-    selectPort()
+    selectPortForGame()
     summarizeRun(user_data[curr_user]['id'])
 
 
-createFile()
-answer = input("Have you already played the game (N/y)")
-if answer == "y":
-    login()
-    playGame()
-else:
-    if answer == "x":
-        cleanUp()
-    else:
-        registerUser(input("Enter Name: "), input("Enter Phone: "))
+
+
+while True:
+    createFile()
+    answer = input("Have you already played the game (N/y)")
+    if answer == "y":
+        login()
         playGame()
+    else:
+        if answer == "x":
+            cleanUp()
+        else:
+            registerUser(selectPortForRegistration(), input("Telefonnummer oder Lieblingstier: "))
+            playGame()
