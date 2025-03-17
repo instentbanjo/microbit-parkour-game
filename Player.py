@@ -188,7 +188,8 @@ class Game:
                 radio.on()
                 radio.send("dth;" + str(self.DEATHS))
                 radio.off()
-                display.show(Image.SAD)
+                global levelFailImage
+                display.show(levelFailImage)
                 sleep(500)
                 self.restart()
 
@@ -196,10 +197,12 @@ class Game:
             if not self.ENDTIMESET:
                 self.END_TIME = running_time()-self.START_TIME
                 self.ENDTIMESET = True
+            global 
             display.show(Image.HEART)
 
     # Ending
     def end(self):
+        global levelDoneImage
         display.clear()
         radio.on()
         TIME = running_time() - self.START_TIME
@@ -212,6 +215,9 @@ class Game:
         radio.off()
 
         self.CURRENT_LEVEL += 1
+
+        display.show(levelDoneImage)
+        sleep(500)
         self.restart()
 
     # Restarting the Level, when for example the level is not possible or the player dies
@@ -230,8 +236,9 @@ class Game:
             display.clear()
 
     def end_game(self):
+        global gameDoneImage 
         display.clear()
-        display.show(Image.HEART)
+        display.show(gameDoneImage)
         self.GAME_OVER = True
 
 Levels = [
@@ -253,5 +260,11 @@ Levels = [
 
 game = Game(Level(*Levels[0]))
 # play game forever
+radio.on()
+radio.send("rgstr;Aron")
+radio.off()
+levelDoneImage = Image.HAPPY
+levelFailImage = Image.SAD
+gameDoneImage = Image.HEART
 while True:
     game.play()

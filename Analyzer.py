@@ -3,6 +3,7 @@ import serial.tools.list_ports
 import datetime
 import json
 import os
+from os import system, name
 import random
 
 curr_user = "default"
@@ -10,17 +11,8 @@ user_data = {}
 
 has_played_before = False
 
-def createFile():
-    try:
-        with open('data.ini', 'x') as f:
-            init()
-    except FileExistsError:
-        print("File already exists")
-
-curr_user = "default"
-user_data = {}
-
-has_played_before = False
+serialInst = serial.Serial()
+isRegistered = False
 
 def createFile():
     try:
@@ -188,9 +180,50 @@ def login():
     selectUser(input("Enter ID: "))
 
 
-def selectPort():
+def selectPortForGame():
+    global isRegistered
+    if not isRegistered:
+        ports=serial.tools.list_ports.comports()
+        portList =[]
+
+        isLinux = False
+        print(isRegistered)
+        if input("Which OS are you using?(W/l)") == "l":
+            isLinux = True
+
+        for port in ports:
+            portList.append(str(port))
+            print(str(port))
+
+
+
+        if isLinux:
+            val=input("Select Port: /dev/tty")
+
+            for x in range(len(portList)):
+                if portList[x].startswith("/dev/tty" + str(val)):
+                    portVar="/dev/tty" + str(val)
+                    print(f"Port selected: {portList[x]}")
+        else:
+            val=input("Select Port: COM")
+
+            for x in range(len(portList)):
+                if portList[x].startswith("COM" + str(val)):
+                    portVar="COM" + str(val)
+                    print(f"Port selected: {portList[x]}")
+
+
+
+        serialInst.baudrate =115200
+        serialInst.port =portVar
+        serialInst.open()
+
+    serialInst.write("rq".encode('utf-8'))
+    logGameData(serialInst)
+
+def selectPortForRegistration():
+    global isRegistered
     ports=serial.tools.list_ports.comports()
-    serialInst =serial.Serial()
     portList =[]
 
     isLinux = False
@@ -224,7 +257,19 @@ def selectPort():
     serialInst.port =portVar
     serialInst.open()
     serialInst.write("rq".encode('utf-8'))
-    logGameData(serialInst)
+    while True:
+        if serialInst.in_waiting:
+            packet = serialInst.readline().decode('utf-8').strip()
+            # Check for level 14 completion to end the session
+            if packet.startswith("rgstr"):
+                print(packet.split(";")[1])
+                answer = input("Ist das dein Name? Y=ja, n=nein: ")
+                if answer == "n":
+                    isRegistered = True
+                    return(input("Mein echter Name ist ")) 
+                isRegistered = True
+                return packet.split(";")[1]
+                break
 
 
 def logGameData(serialInst):
@@ -333,6 +378,8 @@ def summarizeRun(user_id):
 
     updateLiveResult(user_id,last_lvlt, last_dth, last_rst)
     checkIfBestTime(float(last_lvlt))
+    serialInst.close()
+
 
 def updateLiveResult(uid, t, d, r):
     with open('data.ini', 'r') as f:
@@ -430,18 +477,31 @@ def cleanUp():
 
 
 def playGame():
-    selectPort()
+    selectPortForGame()
     summarizeRun(user_data[curr_user]['id'])
 
-
-createFile()
-answer = input("Have you already played the game (N/y)")
-if answer == "y":
-    login()
-    playGame()
-else:
-    if answer == "x":
-        cleanUp()
+def clear():
+    # for windows
+    if name == 'nt':
+        _ = system('cls')
+    # for mac and linux(here, os.name is 'posix')
     else:
-        registerUser(input("Enter Name: "), input("Enter Phone: "))
+        _ = system('clear')
+
+
+
+
+while True:
+    input("To play press any key")
+    clear()
+    createFile()
+    answer = input("Have you already played the game (N/y)")
+    if answer == "y":
+        login()
         playGame()
+    else:
+        if answer == "x":
+            cleanUp()
+        else:
+            registerUser(selectPortForRegistration(), input("Telefonnummer oder Lieblingstier: "))
+            playGame()
