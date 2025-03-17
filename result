@@ -1,0 +1,28 @@
+import sys
+
+def read_run_lines(file_path):
+    # Read the INI file
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+
+    id = sys.argv[1]
+
+    # Collect output lines
+    output_lines = []
+
+    # Find the line that contains '.run.'
+    for i, line in enumerate(lines):
+        if f"user.{id}.live" in line:
+            # Collect the next three lines
+            for j in range(1, 4):
+                if i + j < len(lines):  # Check if we have three lines after it
+                    # Extract and clean the value
+                    value = lines[i + j].strip().split("=")[1]
+                    output_lines.append(value)
+
+    # Output all lines joined with normalized newlines
+    print("\n".join(output_lines).strip())  # CHANGE: Normalized newlines and stripped whitespace
+
+if __name__ == "__main__":
+    # Specify the path to your INI file
+    read_run_lines("C:\\parkour-game\\data.ini")

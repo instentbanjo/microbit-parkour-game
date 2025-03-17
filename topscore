@@ -1,0 +1,23 @@
+import configparser
+
+def read_run_lines(file_path, section_name):
+    # Create a ConfigParser instance
+    config = configparser.ConfigParser()
+
+    # Read the INI file
+    config.read(file_path)
+
+    # Retrieve the section and print its contents
+    if section_name in config:
+        for key, value in config[section_name].items():
+            print(f"{key} = {value}")
+    else:
+        print(f"Section '{section_name}' not found in the file.")
+
+if __name__ == "__main__":
+    # Specify the path to your INI file and the section name
+    file_path = "C:\\parkour-game\\data.ini"
+    section_name = 'topresult'
+
+    # Call the function
+    read_run_lines(file_path, section_name)
