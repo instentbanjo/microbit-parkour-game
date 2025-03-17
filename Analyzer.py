@@ -216,8 +216,8 @@ def selectPortForGame():
 
         serialInst.baudrate =115200
         serialInst.port =portVar
-        serialInst.open()
 
+    serialInst.open()
     serialInst.write("rq".encode('utf-8'))
     logGameData(serialInst)
 
